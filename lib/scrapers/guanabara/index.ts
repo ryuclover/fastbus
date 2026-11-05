@@ -1,5 +1,6 @@
-import { ScraperResult } from "../types"
-import { fetchGuanabaraDirect } from "./client"
+import { routeSlugParts } from "../location";
+import { ScraperResult } from "../types";
+import { fetchGuanabaraDirect } from "./client";
 
 export async function scrapeGuanabara(
   origemOuUrl: string,
@@ -7,30 +8,40 @@ export async function scrapeGuanabara(
   data = "",
   origemUF = "RJ",
   destinoUF = "SP",
-  idJovem = false
+  idJovem = false,
 ): Promise<ScraperResult> {
   if (origemOuUrl.startsWith("http")) {
-    try {
-      const urlObj = new URL(origemOuUrl)
-      const parts = urlObj.pathname.split("/").filter(Boolean)
-      const fromSlug = parts[1] || ""
-      const toSlug = parts[2] || ""
-      const dataParam = urlObj.searchParams.get("departure_date") || ""
-      const idJovemParam = urlObj.searchParams.get("passengers") === "13:1"
-
-      const cleanFrom = fromSlug.replace(/-[a-z]{2}-todos$/, "").replace(/_/g, " ")
-      const cleanTo = toSlug.replace(/-[a-z]{2}-todos$/, "").replace(/_/g, " ")
-      const ufFrom = fromSlug.match(/-([a-z]{2})-todos$/)?.[1]?.toUpperCase() || "RJ"
-      const ufTo = toSlug.match(/-([a-z]{2})-todos$/)?.[1]?.toUpperCase() || "SP"
-
-      return fetchGuanabaraDirect(cleanFrom, ufFrom, cleanTo, ufTo, dataParam, idJovemParam)
-    } catch (e) {
-      console.warn("[Guanabara] Erro ao fazer parse de URL:", e)
-    }
+    const url = new URL(origemOuUrl);
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (
+      !["viajeguanabara.com.br", "www.viajeguanabara.com.br"].includes(
+        url.hostname,
+      ) ||
+      parts.length !== 3 ||
+      parts[0] !== "onibus"
+    )
+      throw new Error("LOCATION_NOT_FOUND");
+    const from = routeSlugParts(parts[1]),
+      to = routeSlugParts(parts[2]);
+    return fetchGuanabaraDirect(
+      from.city,
+      from.uf,
+      to.city,
+      to.uf,
+      url.searchParams.get("departure_date") ?? "",
+      url.searchParams.get("passengers") === "13:1",
+    );
   }
 
-  return fetchGuanabaraDirect(origemOuUrl, origemUF, destino, destinoUF, data, idJovem)
+  return fetchGuanabaraDirect(
+    origemOuUrl,
+    origemUF,
+    destino,
+    destinoUF,
+    data,
+    idJovem,
+  );
 }
 
-export { fetchGuanabaraDirect }
-export * from "./client"
+export { fetchGuanabaraDirect };
+export * from "./client";

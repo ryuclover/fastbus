@@ -1,7 +1,15 @@
 {
-  "capturedAt": "2026-09-11T16:53:48.994Z",
-  "sampleUrl": null,
-  "headers": {},
-  "totalTripsFound": 0,
-  "sampleFirstTrip": null
+  "capturedAt": "2026-10-19T00:43:52.341Z",
+  "transport": "official-browser-flow",
+  "searchEndpoint": "/web/api/v6/trips",
+  "searchArray": "trips",
+  "quotaTripArray": "trips",
+  "quotaKeys": ["youngIdFullPrice", "youngIdPartialPrice"],
+  "countField": "availableSeats",
+  "onlineConfirmationField": "travelCompany.hasGratuity",
+  "observedFrontendVersion": "0.15.169",
+  "fixedHeadersAreReusable": false,
+  "confirmedOffers": 5,
+  "requestCount": 7,
+  "report": "docs/diagnostics/clickbus-official-flow.json"
 }

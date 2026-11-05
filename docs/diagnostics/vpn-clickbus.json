@@ -1,0 +1,54 @@
+{
+  "testedAt": "2026-10-18T10:52:05.892Z",
+  "extension": "Browsec 4.0.0 (Chrome Web Store)",
+  "scope": "Isolated browser only. Public homepage and places API, no booking or WhatsApp.",
+  "results": [
+    {
+      "selectedLocation": "Germany",
+      "proxyMode": "pac_script",
+      "observedCountry": "DE",
+      "homepageError": "page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.clickbus.com.br/"
+    },
+    {
+      "selectedLocation": "Netherlands",
+      "proxyMode": "pac_script",
+      "observedCountry": "NL",
+      "homepageError": "page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.clickbus.com.br/"
+    },
+    {
+      "selectedLocation": "United Kingdom",
+      "proxyMode": "pac_script",
+      "observedCountry": "GB",
+      "homepageError": "page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.clickbus.com.br/"
+    },
+    {
+      "selectedLocation": "United States",
+      "proxyMode": "pac_script",
+      "observedCountry": "US",
+      "homepageStatus": 200,
+      "homepageTitle": "ClickBus | Passagens de Ônibus Online para mais de 4.800 destinos",
+      "challenge": false,
+      "placesStatus": 200,
+      "placesArray": true,
+      "placesCount": 10
+    },
+    {
+      "selectedLocation": "Latvia",
+      "proxyMode": "pac_script",
+      "observedCountry": "LV",
+      "homepageError": "page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.clickbus.com.br/"
+    },
+    {
+      "selectedLocation": "Lithuania",
+      "proxyMode": "pac_script",
+      "observedCountry": "LT",
+      "homepageError": "page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.clickbus.com.br/"
+    },
+    {
+      "selectedLocation": "Singapore",
+      "proxyMode": "pac_script",
+      "observedCountry": "SG",
+      "homepageError": "page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.clickbus.com.br/"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+import type { MonitorConfig } from "../lib/monitoring/schema";
+import type { ProvedorId } from "./providers";
+import type { OfferEvidence, AcquisitionOutcome } from "../lib/scrapers/types";
+export type SearchTrip = {
+  evidence?: OfferEvidence;
+  departureAt?: number;
+  priceMinor?: number;
+  providerTripId?: string;
+  id: string;
+  provider: ProvedorId;
+  date: string;
+  company: string;
+  departure: string;
+  arrival: string;
+  duration: string;
+  cabin: string;
+  price: number;
+  benefit: string;
+  seats: number;
+  url: string;
+};
+export type SearchTarget = {
+  outcome?: AcquisitionOutcome;
+  coverage?: import("../lib/scrapers/types").ScraperResult["coverage"];
+  validation?: import("../lib/scrapers/types").ResultValidation;
+  provider: ProvedorId;
+  date: string;
+  state: "pending" | "complete" | "failed";
+  code?: string;
+  nextAt?: number;
+};
+export type ManualSearch = {
+  id: string;
+  config: MonitorConfig;
+  targets: SearchTarget[];
+  trips: SearchTrip[];
+  state: "queued" | "running" | "partial" | "complete";
+  code: string;
+  createdAt: number;
+  updatedAt: number;
+};

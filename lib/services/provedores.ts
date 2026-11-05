@@ -1,30 +1,39 @@
-import { scrapeClickBus } from "../scrapers/clickbus"
-import { scrapeGontijo } from "../scrapers/gontijo"
-import { scrapeGuanabara } from "../scrapers/guanabara"
-import { scrapeBuser } from "../scrapers/buser"
-import { scrapeEmbarca } from "../scrapers/embarca"
-import { scrapeAguiaBranca } from "../scrapers/aguiabranca"
-import { scrapeMobifacil } from "../scrapers/mobifacil"
-import type { ScraperResult } from "../scrapers/types"
+import { validateProviderResult } from "../scrapers/result-contract";
+import { withLocationMappings } from "../server/location-mappings";
+import { scrapeClickBus } from "../scrapers/clickbus";
+import { scrapeGontijo } from "../scrapers/gontijo";
+import { scrapeGuanabara } from "../scrapers/guanabara";
+import { scrapeBuser } from "../scrapers/buser";
+import { scrapeEmbarca } from "../scrapers/embarca";
+import { scrapeAguiaBranca } from "../scrapers/aguiabranca";
+import { scrapeMobifacil } from "../scrapers/mobifacil";
+import type { ScraperResult } from "../scrapers/types";
 
-export type ProvedorId = "ClickBus" | "Guanabara" | "Buser" | "Gontijo" | "Embarca" | "AguiaBranca" | "Mobifacil"
+import {
+  providerIds,
+  type ProvedorId,
+  PROVIDER_CAPABILITIES,
+  type ProviderCapability,
+} from "../../types/providers";
+export type { ProvedorId, ProviderCapability } from "../../types/providers";
+export { PROVIDER_CAPABILITIES } from "../../types/providers";
 
 export interface ContextoProvedor {
-  origem: string
-  origemUF: string
-  destino: string
-  destinoUF: string
-  dataIso: string
-  idJovem: boolean
+  origem: string;
+  origemUF: string;
+  destino: string;
+  destinoUF: string;
+  dataIso: string;
+  idJovem: boolean;
 }
 
 interface AdaptadorProvedor {
-  id: ProvedorId
-  suportaIdJovem: boolean
-  consultar: (contexto: ContextoProvedor) => Promise<ScraperResult>
+  id: ProvedorId;
+  suportaIdJovem: boolean;
+  consultar: (contexto: ContextoProvedor) => Promise<ScraperResult>;
 }
 
-export const adaptadoresProvedores: Record<ProvedorId, AdaptadorProvedor> = {
+const rawProviders: Record<ProvedorId, AdaptadorProvedor> = {
   ClickBus: {
     id: "ClickBus",
     suportaIdJovem: true,
@@ -67,11 +76,35 @@ export const adaptadoresProvedores: Record<ProvedorId, AdaptadorProvedor> = {
     consultar: ({ origem, origemUF, destino, destinoUF, dataIso, idJovem }) =>
       scrapeMobifacil(origem, origemUF, destino, destinoUF, dataIso, idJovem),
   },
-}
+};
 
-export function obterAdaptadores(provedores?: ProvedorId[], idJovem = false): AdaptadorProvedor[] {
-  const ids = provedores || Object.keys(adaptadoresProvedores) as ProvedorId[]
+function registeredAdapter(id: ProvedorId): AdaptadorProvedor {
+  const raw = rawProviders[id];
+  return {
+    ...raw,
+    consultar: async (ctx) =>
+      validateProviderResult(
+        await withLocationMappings(() => raw.consultar(ctx)),
+        id,
+        ctx.dataIso,
+        Date.now(),
+        {
+          origin: ctx.origem + "::" + ctx.origemUF,
+          destination: ctx.destino + "::" + ctx.destinoUF,
+        },
+      ),
+  };
+}
+export const adaptadoresProvedores = Object.fromEntries(
+  providerIds.map((id) => [id, registeredAdapter(id)]),
+) as Record<ProvedorId, AdaptadorProvedor>;
+
+export function obterAdaptadores(
+  provedores?: ProvedorId[],
+  idJovem = false,
+): AdaptadorProvedor[] {
+  const ids = provedores || providerIds;
   return ids
     .map((id) => adaptadoresProvedores[id])
-    .filter((adaptador) => adaptador && (!idJovem || adaptador.suportaIdJovem))
+    .filter((adaptador) => adaptador && (!idJovem || adaptador.suportaIdJovem));
 }

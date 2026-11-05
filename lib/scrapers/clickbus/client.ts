@@ -1,9 +1,22 @@
-import { ResultItem, ScraperResult } from "../types"
-import { createHash, randomUUID } from "node:crypto"
+import { clickTrip, parseRows } from "../raw-contracts";
+import {
+  monitoredFetch,
+  remainingMonitoringRequests,
+  blockMonitoringRequests,
+} from "../../monitoring/request-budget";
+import { ResultItem, ScraperResult } from "../types";
+import { createHash, randomUUID } from "node:crypto";
+import { mappedCity } from "../../server/location-mappings";
+import { canonicalCity, cityMatches, resolveExactSlug } from "../location";
+import {
+  parseClickBusTripPage,
+  isClickBusChallengeHtml,
+  type ClickBusQuotas,
+} from "./benefits";
 
-const CLICKBUS_SECRET = "2a8e4222-9c42-342e-efa5-9132c8ode00e"
+const CLICKBUS_SECRET = "2a8e4222-9c42-342e-efa5-9132c8ode00e";
 const DEFAULT_USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 // Mapeamento de grandes regiões metropolitanas e capitais onde a ClickBus adota o slug agregador "-todos"
 const METROPOLITAN_SLUGS: Record<string, string> = {
@@ -30,233 +43,198 @@ const METROPOLITAN_SLUGS: Record<string, string> = {
   "belem-pa": "belem-pa-todos",
   "sao-luis-ma": "sao-luis-ma-todos",
   "teresina-pi": "teresina-pi-todos",
-}
+};
 
-// Cache de slugs dinâmicos consultados no endpoint /web/api/v4/places
-const slugCache = new Map<string, string>()
-
-function normalizarSlug(cidade: string): string {
-  return cidade
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-}
-
-function gerarSecureToken(relativeUrl: string, userAgent = DEFAULT_USER_AGENT): string {
+function gerarSecureToken(
+  relativeUrl: string,
+  userAgent = DEFAULT_USER_AGENT,
+): string {
   const payload = {
     "fp-cb": "",
     "user-agent": userAgent,
-  }
+  };
   const obj = {
     s: CLICKBUS_SECRET,
     u: relativeUrl,
     e: payload,
-  }
-  return createHash("sha1").update(JSON.stringify(obj)).digest("hex")
+  };
+  return createHash("sha1").update(JSON.stringify(obj)).digest("hex");
 }
 
-async function resolverSlugClickBus(cidade: string, uf: string): Promise<string> {
-  const baseKey = `${normalizarSlug(cidade)}-${uf.toLowerCase()}`
+export async function resolverSlugClickBus(
+  cidade: string,
+  uf: string,
+): Promise<string> {
+  const { key: baseKey, nome } = canonicalCity(cidade, uf);
   if (METROPOLITAN_SLUGS[baseKey]) {
-    return METROPOLITAN_SLUGS[baseKey]
+    return METROPOLITAN_SLUGS[baseKey];
   }
-  if (slugCache.has(baseKey)) {
-    return slugCache.get(baseKey)!
-  }
-
-  // Tenta consultar a API pública de lugares da ClickBus
-  try {
-    const relativeUrl = `/web/api/v4/places?name=${encodeURIComponent(cidade)}&clientId=2`
-    const token = gerarSecureToken(relativeUrl)
-    const response = await fetch(`https://bff.clickbus.com${relativeUrl}`, {
-      headers: {
-        "user-agent": DEFAULT_USER_AGENT,
-        "st-cb-px": token,
-        accept: "application/json",
-        referer: "https://www.clickbus.com.br/",
+  return mappedCity("ClickBus", baseKey, async () => {
+    const relativeUrl = `/web/api/v4/places?name=${encodeURIComponent(nome)}&clientId=2`;
+    const token = gerarSecureToken(relativeUrl);
+    const response = await monitoredFetch(
+      `https://bff.clickbus.com${relativeUrl}`,
+      {
+        headers: {
+          "user-agent": DEFAULT_USER_AGENT,
+          "st-cb-px": token,
+          accept: "application/json",
+          referer: "https://www.clickbus.com.br/",
+        },
+        timeoutMs: 3500,
       },
-      signal: AbortSignal.timeout(3500),
-    })
+    );
 
-    if (response.ok) {
-      const places = await response.json()
-      if (Array.isArray(places) && places.length > 0) {
-        // Encontra o melhor match para o estado correspondente
-        const matchUf = places.find(
-          (p) =>
-            p.state?.code?.toLowerCase() === uf.toLowerCase() ||
-            p.state?.name?.toLowerCase() === uf.toLowerCase()
-        )
-        const chosen = matchUf || places[0]
-        if (chosen?.slug) {
-          slugCache.set(baseKey, chosen.slug)
-          return chosen.slug
-        }
-      }
-    }
-  } catch {
-    // Ignora erro de resolução dinâmica e segue para o slug padrão
-  }
-
-  slugCache.set(baseKey, baseKey)
-  return baseKey
+    if (!response.ok) throw new Error("CLICKBUS_HTTP_" + response.status);
+    return resolveExactSlug(await response.json(), baseKey);
+  });
 }
 
-interface ClickBusCotasIdJovem {
-  vagas100: number
-  vagas50: number
-  preco50?: number
-  taxaEmbarque100?: number
-  temIdJovem: boolean
+export function clickBusTripUrl(tripId: string, benefit = true) {
+  return `https://www.clickbus.com.br/viagem?tripId=${encodeURIComponent(tripId)}&clientId=2&discount=${benefit}&type=direct&isLowFare=false&isInTransit=false&flow=mfe`;
 }
 
-function extrairDiscountsHtml(html: string): any | null {
-  const idxKey = html.indexOf("discounts")
-  if (idxKey === -1) return null
-
-  const idxBrace = html.indexOf("{", idxKey)
-  if (idxBrace === -1 || idxBrace - idxKey > 30) return null
-
-  let depth = 0
-  let end = -1
-  let inString = false
-  let escape = false
-
-  for (let i = idxBrace; i < html.length; i++) {
-    const c = html[i]
-    if (escape) {
-      escape = false
-      continue
-    }
-    if (c === "\\") {
-      escape = true
-      continue
-    }
-    if (c === '"') {
-      inString = !inString
-      continue
-    }
-    if (!inString) {
-      if (c === "{") depth++
-      else if (c === "}") {
-        depth--
-        if (depth === 0) {
-          end = i + 1
-          break
-        }
-      }
-    }
-  }
-
-  if (end === -1) return null
-  const rawChunk = html.slice(idxBrace, end)
+async function checarCotasViagemClickBus(
+  tripId: string,
+): Promise<ClickBusQuotas | null> {
+  const url = clickBusTripUrl(tripId);
   try {
-    const unescaped = rawChunk.replace(/\\"/g, '"').replace(/\\\\/g, "\\")
-    return JSON.parse(unescaped)
-  } catch {
-    return null
-  }
-}
-
-async function checarCotasViagemClickBus(tripId: string): Promise<ClickBusCotasIdJovem | null> {
-  const url = `https://www.clickbus.com.br/viagem?tripId=${tripId}&clientId=2&discount=true&type=direct&isLowFare=false&isInTransit=false&flow=mfe`
-  try {
-    const res = await fetch(url, {
+    const res = await monitoredFetch(url, {
       headers: {
         "user-agent": DEFAULT_USER_AGENT,
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "accept-language": "pt-BR,pt;q=0.9",
       },
-      signal: AbortSignal.timeout(1800),
-    })
-    if (!res.ok) return null
-    const html = await res.text()
-    const discounts = extrairDiscountsHtml(html)
-    if (!discounts) return null
-
-    const yFull = discounts.youngIdFullPrice
-    const yPart = discounts.youngIdPartialPrice
-
-    const vagas100 = yFull ? Number(yFull.amount ?? 0) : 0
-    const vagas50 = yPart ? Number(yPart.amount ?? 0) : 0
-    const taxaEmbarque100 = yFull?.price != null ? Number(yFull.price) : 0
-    const preco50 = yPart?.price != null ? Number(yPart.price) : undefined
-
-    return {
-      vagas100,
-      vagas50,
-      preco50,
-      taxaEmbarque100,
-      temIdJovem: vagas100 > 0 || vagas50 > 0,
+      timeoutMs: 8000,
+    });
+    if ([401, 403, 429, 503].includes(res.status))
+      throw new Error("PROVIDER_BLOCKED");
+    if (!res.ok) return null;
+    const html = await res.text();
+    if (isClickBusChallengeHtml(html)) {
+      blockMonitoringRequests();
+      throw new Error("PROVIDER_BLOCKED");
     }
-  } catch {
-    return null
+    return parseClickBusTripPage(html, tripId);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      ["PROVIDER_BLOCKED", "PROVIDER_REQUEST_BUDGET"].includes(error.message)
+    )
+      throw error;
+    return null;
   }
 }
 
-async function converterTripsClickBus(
-  trips: any[],
+const candidateCursors = new Map<string, number>();
+
+function tripStops(part: {
+  departure?: {
+    city?: string | null;
+    id?: string | null;
+    name?: string | null;
+  } | null;
+  arrival?: {
+    city?: string | null;
+    id?: string | null;
+    name?: string | null;
+  } | null;
+}) {
+  const originStop = {
+    city: part.departure?.city ?? null,
+    id: part.departure?.id ?? null,
+    terminal: part.departure?.name ?? null,
+  };
+  const destinationStop = {
+    city: part.arrival?.city ?? null,
+    id: part.arrival?.id ?? null,
+    terminal: part.arrival?.name ?? null,
+  };
+  return {
+    originStop,
+    destinationStop,
+    segments: [{ origin: originStop, destination: destinationStop }],
+  };
+}
+export async function converterTripsClickBus(
+  trips: unknown[],
   origem: string,
   origemUF: string,
   destino: string,
   destinoUF: string,
   dataIso: string,
   siteUrl: string,
-  idJovem: boolean
-): Promise<ResultItem[]> {
-  const resultados: ResultItem[] = []
-  const normOrigem = normalizarSlug(origem)
-  const normDestino = normalizarSlug(destino)
+  idJovem: boolean,
+  loadQuota: (
+    tripId: string,
+  ) => Promise<ClickBusQuotas | null> = checarCotasViagemClickBus,
+): Promise<{
+  resultados: ResultItem[];
+  unconfirmed: number;
+  partial: boolean;
+  coverage: {
+    unsupportedConnections?: number;
+    candidates: number;
+    checked: number;
+    unconfirmed: number;
+    partial: boolean;
+  };
+}> {
+  const resultados: ResultItem[] = [];
 
   // Filtra as viagens que atendem a rota e data
-  const tripsFiltrados = trips.filter((trip) => {
-    const part = trip.parts?.[0] || trip
-    const partidaData = part.departure?.date || trip.departure?.date
-    if (partidaData && partidaData !== dataIso) return false
+  const { rows, rejected } = parseRows(trips, clickTrip);
+  const unsupported = rows.filter(
+    (trip) => (trip.parts?.length ?? 0) > 1,
+  ).length;
+  const skipped = rejected + unsupported;
+  const tripsFiltrados = rows.filter((trip) => {
+    const part = trip.parts?.[0] || trip;
+    if ((trip.parts?.length ?? 0) > 1) return false;
+    const partidaData = part.departure?.date || trip.departure?.date;
+    if (partidaData && partidaData !== dataIso) return false;
 
-    const depState = part.departure?.state || trip.departure?.state || ""
-    const arrState = part.arrival?.state || trip.arrival?.state || ""
-    if (depState && origemUF && depState.toUpperCase() !== origemUF.toUpperCase()) return false
-    if (arrState && destinoUF && arrState.toUpperCase() !== destinoUF.toUpperCase()) return false
+    const depState = part.departure?.state || trip.departure?.state || "";
+    const arrState = part.arrival?.state || trip.arrival?.state || "";
+    if (
+      depState &&
+      origemUF &&
+      depState.toUpperCase() !== origemUF.toUpperCase()
+    )
+      return false;
+    if (
+      arrState &&
+      destinoUF &&
+      arrState.toUpperCase() !== destinoUF.toUpperCase()
+    )
+      return false;
 
-    const depCity = part.departure?.city || trip.departure?.city || ""
-    const arrCity = part.arrival?.city || trip.arrival?.city || ""
-    if (depCity) {
-      const nDepCity = normalizarSlug(depCity)
-      if (nDepCity !== normOrigem && !nDepCity.includes(normOrigem) && !normOrigem.includes(nDepCity)) {
-        return false
-      }
-    }
-    if (arrCity) {
-      const nArrCity = normalizarSlug(arrCity)
-      if (nArrCity !== normDestino && !nArrCity.includes(normDestino) && !normDestino.includes(nArrCity)) {
-        return false
-      }
-    }
-
-    return true
-  })
+    const depCity = part.departure?.city || trip.departure?.city || "";
+    const arrCity = part.arrival?.city || trip.arrival?.city || "";
+    if (depCity && !cityMatches(depCity, origem, origemUF)) return false;
+    if (arrCity && !cityMatches(arrCity, destino, destinoUF)) return false;
+    return true;
+  });
 
   // Se não for modo ID Jovem, retorna todas as viagens comerciais normais
   if (!idJovem) {
     for (const trip of tripsFiltrados) {
-      const part = trip.parts?.[0] || trip
+      const part = trip.parts?.[0] || trip;
       const companyName =
         part.travelCompany?.name ||
         trip.travelCompany?.name ||
         trip.company?.name ||
-        "Viação"
-      const priceNum = trip.price != null ? Number(trip.price) : undefined
+        "Viação";
+      const priceNum = trip.price != null ? Number(trip.price) : undefined;
       const horarioPartida =
         part.departure?.time?.slice(0, 5) ||
         trip.departure?.schedule?.time?.slice(0, 5) ||
-        "N/A"
+        "N/A";
       const horarioChegada =
         part.arrival?.time?.slice(0, 5) ||
         trip.arrival?.schedule?.time?.slice(0, 5) ||
-        "N/A"
+        "N/A";
       const duracao =
         typeof trip.duration === "string"
           ? trip.duration
@@ -264,143 +242,178 @@ async function converterTripsClickBus(
             ? trip.duration.hours
             : trip.duration?.hours
               ? `${trip.duration.hours}h`
-              : part.duration || "N/A"
+              : typeof part.duration === "string"
+                ? part.duration
+                : undefined;
 
+      const commercialTripId = part.tripId || trip.uuid;
       resultados.push({
+        providerTripId:
+          typeof (part.tripId || trip.uuid) === "string"
+            ? part.tripId || trip.uuid || undefined
+            : undefined,
         empresa: companyName,
+        ...tripStops(part),
+        arrivalDate: part.arrival?.date ?? undefined,
         horario: horarioPartida,
         chegada: horarioChegada,
         duracao,
-        valor: priceNum != null ? `R$ ${priceNum.toFixed(2).replace(".", ",")}` : undefined,
+        valor:
+          priceNum != null
+            ? `R$ ${priceNum.toFixed(2).replace(".", ",")}`
+            : undefined,
         valorNumerico: priceNum,
-        classe: part.serviceClass?.name || trip.serviceClass?.name || "Convencional",
+        classe:
+          part.serviceClass?.name ||
+          trip.serviceClass?.name ||
+          trip.anttServiceClass?.name ||
+          undefined,
         tipoGratuidade: "nenhuma",
         vagasIdJovem: 0,
-        poltronasLivres: part.availableSeats ?? trip.availableSeats ?? 0,
+        poltronasLivres:
+          part.availableSeats ?? trip.availableSeats ?? undefined,
         origem: `${origem} - ${origemUF}`,
         destino: `${destino} - ${destinoUF}`,
         data: dataIso,
-        linkCompra: siteUrl,
-      })
+        linkCompra: commercialTripId
+          ? clickBusTripUrl(commercialTripId, false)
+          : siteUrl,
+      });
     }
-    return resultados
+    return {
+      resultados,
+      unconfirmed: skipped,
+      partial: skipped > 0,
+      coverage: {
+        ...(unsupported ? { unsupportedConnections: unsupported } : {}),
+        candidates: tripsFiltrados.length + skipped,
+        checked: tripsFiltrados.length + skipped,
+        unconfirmed: skipped,
+        partial: skipped > 0,
+      },
+    };
   }
 
-  // MODO ID JOVEM:
-  // Filtra candidatas potenciais (Convencional, Semi-Leito, Executivo ou hasGratuityCheckout)
-  const candidatas = tripsFiltrados
-    .filter((trip) => {
-      const part = trip.parts?.[0] || trip
-      const anttClass = (part.serviceClass?.name || trip.anttServiceClass?.name || "").toLowerCase()
-      const isElegivel =
-        anttClass.includes("convencional") ||
-        anttClass.includes("semi") ||
-        anttClass.includes("executivo") ||
-        !/(?<!semi[\s\-_]*)leito|cama/i.test(anttClass)
-      const hasGratuity = trip.options?.hasGratuityCheckout === true || trip.options?.isGratuityTrip === true
-      return isElegivel || hasGratuity
-    })
-    .sort((a, b) => {
-      // Prioriza quem explicitamente tem hasGratuityCheckout marcado pelo BFF
-      const aGrat = a.options?.hasGratuityCheckout === true ? 1 : 0
-      const bGrat = b.options?.hasGratuityCheckout === true ? 1 : 0
-      return bGrat - aGrat
-    })
-    .slice(0, 15)
+  // ID Jovem requires conventional service and an online benefit checkout.
+  const candidatas = tripsFiltrados.filter((trip) => {
+    const part = trip.parts?.[0] || trip;
+    const anttClass = (
+      part.serviceClass?.name ||
+      trip.anttServiceClass?.name ||
+      ""
+    ).toLowerCase();
+    return (
+      ["convencional", "conv"].includes(anttClass.trim()) &&
+      trip.options?.isGratuityTrip === true &&
+      trip.options?.hasGratuityCheckout === true
+    );
+  });
 
-  // Consulta cotas reais das candidatas com deadline estrito de 4.5s
-  const deadline = Date.now() + 4500
-  const BATCH_SIZE = 6
-  for (let i = 0; i < candidatas.length; i += BATCH_SIZE) {
-    if (Date.now() >= deadline) break
-    const batch = candidatas.slice(i, i + BATCH_SIZE)
-    const cotasBatch = await Promise.all(
-      batch.map(async (trip) => {
-        const part = trip.parts?.[0] || trip
-        const tripId = part.tripId || trip.uuid
-        if (!tripId) return { trip, cotas: null }
-        const cotas = await checarCotasViagemClickBus(tripId)
-        return { trip, cotas }
-      })
+  // Rotate small batches across future scheduled queries rather than bursting all trips.
+  const offset = candidateCursors.get(siteUrl) || 0;
+  const batch = Array.from(
+    { length: Math.min(6, candidatas.length, remainingMonitoringRequests()) },
+    (_, i) => candidatas[(offset + i) % candidatas.length],
+  );
+  candidateCursors.delete(siteUrl);
+  candidateCursors.set(
+    siteUrl,
+    candidatas.length ? (offset + batch.length) % candidatas.length : 0,
+  );
+  if (candidateCursors.size > 100)
+    candidateCursors.delete(candidateCursors.keys().next().value!);
+  let unconfirmed = skipped;
+  for (const trip of batch) {
+    const partForId = trip.parts?.[0] || trip;
+    const tripId = partForId.tripId || trip.uuid;
+    if (typeof tripId !== "string" || !tripId) {
+      unconfirmed++;
+      continue;
+    }
+    const cotas = await loadQuota(tripId);
+    if (!cotas) {
+      unconfirmed++;
+      continue;
+    }
+
+    const part = trip.parts?.[0] || trip;
+    const companyName =
+      part.travelCompany?.name ||
+      trip.travelCompany?.name ||
+      trip.company?.name ||
+      "Viação";
+    const horarioPartida =
+      part.departure?.time?.slice(0, 5) ||
+      trip.departure?.schedule?.time?.slice(0, 5) ||
+      "N/A";
+    const horarioChegada =
+      part.arrival?.time?.slice(0, 5) ||
+      trip.arrival?.schedule?.time?.slice(0, 5) ||
+      "N/A";
+    const duracao =
+      typeof trip.duration === "string"
+        ? trip.duration
+        : typeof trip.duration?.hours === "string"
+          ? trip.duration.hours
+          : trip.duration?.hours
+            ? `${trip.duration.hours}h`
+            : typeof part.duration === "string"
+              ? part.duration
+              : undefined;
+    const nomeClasse =
+      part.serviceClass?.name ||
+      trip.serviceClass?.name ||
+      trip.anttServiceClass?.name ||
+      undefined;
+    const poltronasLivres =
+      part.availableSeats ?? trip.availableSeats ?? undefined;
+
+    for (const [percentage, slots, price] of [
+      [100, cotas.vagas100, cotas.preco100],
+      [50, cotas.vagas50, cotas.preco50],
+    ] as const) {
+      if (slots <= 0) continue;
+      if (price === undefined) continue;
+      resultados.push({
+        empresa: companyName,
+        ...tripStops(part),
+        arrivalDate: part.arrival?.date ?? undefined,
+        horario: horarioPartida,
+        chegada: horarioChegada,
+        duracao,
+        valor: `R$ ${price.toFixed(2).replace(".", ",")}`,
+        valorNumerico: price,
+        classe: `${nomeClasse} (${percentage}% ID Jovem)`,
+        providerTripId: tripId,
+        tipoGratuidade: percentage === 100 ? "id_jovem_100" : "id_jovem_50",
+        vagasIdJovem: slots,
+        poltronasLivres,
+        origem: `${origem} - ${origemUF}`,
+        destino: `${destino} - ${destinoUF}`,
+        data: dataIso,
+        linkCompra: clickBusTripUrl(tripId),
+      });
+    }
+    if (
+      (cotas.vagas100 > 0 && cotas.preco100 === undefined) ||
+      (cotas.vagas50 > 0 && cotas.preco50 === undefined)
     )
-
-    for (const { trip, cotas } of cotasBatch) {
-      // Se não tem cotas confirmadas ou ambas as cotas ID Jovem estão zeradas/esgotadas, DESCARTA (elimina falso positivo)
-      if (!cotas || !cotas.temIdJovem) continue
-
-      const part = trip.parts?.[0] || trip
-      const companyName =
-        part.travelCompany?.name ||
-        trip.travelCompany?.name ||
-        trip.company?.name ||
-        "Viação"
-      const horarioPartida =
-        part.departure?.time?.slice(0, 5) ||
-        trip.departure?.schedule?.time?.slice(0, 5) ||
-        "N/A"
-      const horarioChegada =
-        part.arrival?.time?.slice(0, 5) ||
-        trip.arrival?.schedule?.time?.slice(0, 5) ||
-        "N/A"
-      const duracao =
-        typeof trip.duration === "string"
-          ? trip.duration
-          : typeof trip.duration?.hours === "string"
-            ? trip.duration.hours
-            : trip.duration?.hours
-              ? `${trip.duration.hours}h`
-              : part.duration || "N/A"
-      const nomeClasse = part.serviceClass?.name || trip.serviceClass?.name || "Convencional"
-      const poltronasLivres = part.availableSeats ?? trip.availableSeats ?? 0
-
-      // 1. Cota ID Jovem 100% (Grátis / Taxa de embarque)
-      if (cotas.vagas100 > 0) {
-        resultados.push({
-          empresa: companyName,
-          horario: horarioPartida,
-          chegada: horarioChegada,
-          duracao,
-          valor: cotas.taxaEmbarque100 && cotas.taxaEmbarque100 > 0
-            ? `R$ ${cotas.taxaEmbarque100.toFixed(2).replace(".", ",")}`
-            : "R$ 0,00",
-          valorNumerico: cotas.taxaEmbarque100 || 0,
-          classe: `${nomeClasse} (100% ID Jovem)`,
-          tipoGratuidade: "id_jovem_100",
-          vagasIdJovem: cotas.vagas100,
-          poltronasLivres,
-          origem: `${origem} - ${origemUF}`,
-          destino: `${destino} - ${destinoUF}`,
-          data: dataIso,
-          linkCompra: siteUrl,
-        })
-      }
-
-      // 2. Cota ID Jovem 50% (50% de desconto)
-      if (cotas.vagas50 > 0) {
-        const preco50Formatado = cotas.preco50 != null
-          ? `R$ ${cotas.preco50.toFixed(2).replace(".", ",")}`
-          : "50% Desconto"
-        resultados.push({
-          empresa: companyName,
-          horario: horarioPartida,
-          chegada: horarioChegada,
-          duracao,
-          valor: preco50Formatado,
-          valorNumerico: cotas.preco50 ?? 0,
-          classe: `${nomeClasse} (50% ID Jovem)`,
-          tipoGratuidade: "id_jovem_50",
-          vagasIdJovem: cotas.vagas50,
-          poltronasLivres,
-          origem: `${origem} - ${origemUF}`,
-          destino: `${destino} - ${destinoUF}`,
-          data: dataIso,
-          linkCompra: siteUrl,
-        })
-      }
-    }
+      unconfirmed++;
   }
 
-  return resultados
+  const partial = skipped > 0 || batch.length < candidatas.length;
+  return {
+    resultados,
+    unconfirmed,
+    partial,
+    coverage: {
+      ...(unsupported ? { unsupportedConnections: unsupported } : {}),
+      candidates: candidatas.length + skipped,
+      checked: batch.length + skipped,
+      unconfirmed,
+      partial: partial || unconfirmed > 0,
+    },
+  };
 }
 
 export class ClickBusSession {
@@ -414,18 +427,18 @@ export class ClickBusSession {
     destino: string,
     destinoUF: string,
     dataIso: string,
-    idJovem = false
+    idJovem = false,
   ): Promise<ScraperResult> {
-    const fromSlug = await resolverSlugClickBus(origem, origemUF)
-    const toSlug = await resolverSlugClickBus(destino, destinoUF)
-    const siteUrl = `https://www.clickbus.com.br/onibus/${fromSlug}/${toSlug}?departureDate=${dataIso}${idJovem ? "&gratuity=true" : ""}`
+    const fromSlug = await resolverSlugClickBus(origem, origemUF);
+    const toSlug = await resolverSlugClickBus(destino, destinoUF);
+    const siteUrl = `https://www.clickbus.com.br/onibus/${fromSlug}/${toSlug}?departureDate=${dataIso}${idJovem ? "&gratuity=true" : ""}`;
 
-    const relativeUrl = `/web/api/v6/trips?from=${fromSlug}&to=${toSlug}&departureDate=${dataIso}&clientId=2`
-    const fullUrl = `https://bff.clickbus.com${relativeUrl}`
+    const relativeUrl = `/web/api/v6/trips?from=${fromSlug}&to=${toSlug}&departureDate=${dataIso}&clientId=2`;
+    const fullUrl = `https://bff.clickbus.com${relativeUrl}`;
 
     try {
-      const token = gerarSecureToken(relativeUrl)
-      const response = await fetch(fullUrl, {
+      const token = gerarSecureToken(relativeUrl);
+      const response = await monitoredFetch(fullUrl, {
         headers: {
           "user-agent": DEFAULT_USER_AGENT,
           "st-cb-px": token,
@@ -436,42 +449,34 @@ export class ClickBusSession {
           "x-transaction-id": `SEARCH-MFE-${randomUUID()}`,
           "x-customer-session-id": `Web-${randomUUID()}`,
         },
-        signal: AbortSignal.timeout(6000),
-      })
+        timeoutMs: 6000,
+      });
 
       if (!response.ok) {
-        // Se a rota não existe no ClickBus ou retornou 404 (ex: Place not found), tratamos sem erro
-        if (response.status === 404) {
-          return {
-            disponivel: false,
-            vagasIdJovem: 0,
-            detalhes: "Nenhuma linha operada pela ClickBus encontrada para este trecho.",
-            siteUrl,
-            empresa: "ClickBus",
-            provedor: "ClickBus",
-            dataConsultada: dataIso,
-            resultados: [],
-          }
-        }
-
-        console.warn(`[ClickBus] Resposta HTTP ${response.status} para ${relativeUrl}`)
+        console.warn(
+          `[ClickBus] Resposta HTTP ${response.status} para ${relativeUrl}`,
+        );
         return {
+          error: `CLICKBUS_HTTP_${response.status}`,
           disponivel: false,
           vagasIdJovem: 0,
-          detalhes: "Consulte o portal oficial da ClickBus para disponibilidade nesta rota.",
+          detalhes:
+            "Consulte o portal oficial da ClickBus para disponibilidade nesta rota.",
           siteUrl,
           empresa: "ClickBus",
           provedor: "ClickBus",
           dataConsultada: dataIso,
           resultados: [],
-        }
+        };
       }
 
-      const json = await response.json()
-      const trips = Array.isArray(json.trips) ? json.trips : []
+      const json = await response.json();
+      if (!json || !Array.isArray(json.trips))
+        throw new Error("CLICKBUS_INVALID_RESPONSE");
+      const trips = json.trips;
 
       if (trips.length > 0) {
-        const resultados = await converterTripsClickBus(
+        const converted = await converterTripsClickBus(
           trips,
           origem,
           origemUF,
@@ -479,19 +484,28 @@ export class ClickBusSession {
           destinoUF,
           dataIso,
           siteUrl,
-          idJovem
-        )
+          idJovem,
+        );
 
+        const { resultados, unconfirmed, partial } = converted;
         return {
+          coverage: converted.coverage,
+          error:
+            !resultados.length && (unconfirmed || partial)
+              ? "ID_JOVEM_UNCONFIRMED"
+              : undefined,
           disponivel: resultados.length > 0,
-          vagasIdJovem: resultados.reduce((total, item) => total + (item.vagasIdJovem || 0), 0),
-          detalhes: `${resultados.length} viagem(ns) encontrada(s) na ClickBus para ${dataIso}`,
+          vagasIdJovem: resultados.reduce(
+            (total, item) => total + (item.vagasIdJovem || 0),
+            0,
+          ),
+          detalhes: `${resultados.length} oferta(s) confirmada(s) na ClickBus para ${dataIso}${unconfirmed || partial ? "; verificação parcial das cotas, demais viagens aguardam consulta futura" : ""}`,
           siteUrl,
           empresa: "ClickBus",
           provedor: "ClickBus",
           dataConsultada: dataIso,
           resultados,
-        }
+        };
       }
 
       return {
@@ -503,19 +517,27 @@ export class ClickBusSession {
         provedor: "ClickBus",
         dataConsultada: dataIso,
         resultados: [],
-      }
+      };
     } catch (err: any) {
-      console.warn(`[ClickBus] Erro ao consultar ${relativeUrl}:`, err?.message || err)
+      console.warn(
+        `[ClickBus] Erro ao consultar ${relativeUrl}:`,
+        err?.message || err,
+      );
       return {
+        error:
+          err?.message === "PROVIDER_BLOCKED"
+            ? "PROVIDER_BLOCKED"
+            : "CLICKBUS_QUERY_FAILED",
         disponivel: false,
         vagasIdJovem: 0,
-        detalhes: "Consulte o portal oficial da ClickBus para disponibilidade nesta rota.",
+        detalhes:
+          "Não foi possível confirmar disponibilidade; a consulta falhou. Acesse o portal oficial da ClickBus para disponibilidade nesta rota.",
         siteUrl,
         empresa: "ClickBus",
         provedor: "ClickBus",
         dataConsultada: dataIso,
         resultados: [],
-      }
+      };
     }
   }
 
@@ -525,11 +547,11 @@ export class ClickBusSession {
 }
 
 // Instância singleton para reuso em consultas de intervalo
-let globalSession: ClickBusSession | null = null
+let globalSession: ClickBusSession | null = null;
 
 export async function getClickBusSession(): Promise<ClickBusSession> {
   if (!globalSession) {
-    globalSession = new ClickBusSession()
+    globalSession = new ClickBusSession();
   }
-  return globalSession
+  return globalSession;
 }

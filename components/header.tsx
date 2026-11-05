@@ -1,4 +1,4 @@
-import { Bus, Zap, ShieldCheck } from "lucide-react"
+import { Bus } from "lucide-react"
 
 export function Header() {
   return (
@@ -12,7 +12,7 @@ export function Header() {
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold text-xl tracking-tight leading-none bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text">
-                Fast<span className="text-primary">Travel</span>
+                Fast<span className="text-primary">Bus</span>
               </span>
               <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
                 Comparador Multi-Provedores & ID Jovem

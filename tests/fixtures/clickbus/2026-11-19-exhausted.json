@@ -1,0 +1,74 @@
+{
+  "observedAt": "2026-10-18T12:04:02.514Z",
+  "route": {
+    "origin": "Rio de Janeiro::RJ",
+    "destination": "Sao Paulo::SP"
+  },
+  "date": "2026-11-19",
+  "sourceUrl": "https://www.clickbus.com.br/viagem?tripId=644ba1f2-ac4d-3764-8450-b20ca27fbc1e&clientId=2&isLowFare=false&isInTransit=false&discount=true&type=direct&isMultiTrip=true&hasReturn=false&isReturn=false&flow=mfe&hideAddToOrder=true",
+  "tripId": "644ba1f2-ac4d-3764-8450-b20ca27fbc1e",
+  "expectedUi": {
+    "full": 0,
+    "partial": 0
+  },
+  "pageTrip": {
+    "uuid": "644ba1f2-ac4d-3764-8450-b20ca27fbc1e",
+    "travelCompany": {
+      "hasGratuity": true
+    },
+    "discounts": {
+      "youngIdPartialPrice": {
+        "price": 46.73,
+        "percentage": 50,
+        "type": "YOUNG_ID",
+        "young": true,
+        "availableSeats": 0,
+        "amount": 0,
+        "occupiedSeats": 2
+      },
+      "youngIdFullPrice": {
+        "price": 0,
+        "percentage": 100,
+        "type": "YOUNG_ID",
+        "young": true,
+        "availableSeats": 0,
+        "amount": 0,
+        "occupiedSeats": 2
+      }
+    }
+  },
+  "searchTrip": {
+    "price": 109.99,
+    "options": {
+      "isDiscountAvailable": true,
+      "hasGratuityCheckout": true,
+      "isGratuityTrip": true,
+      "hasWomanSpace": false
+    },
+    "parts": [
+      {
+        "tripId": "644ba1f2-ac4d-3764-8450-b20ca27fbc1e",
+        "departure": {
+          "date": "2026-11-19",
+          "time": "09:00:00",
+          "city": "Rio de Janeiro",
+          "state": "RJ"
+        },
+        "arrival": {
+          "date": "2026-11-19",
+          "time": "15:20:00",
+          "city": "São Paulo",
+          "state": "SP"
+        },
+        "serviceClass": {
+          "id": 1,
+          "name": "Convencional",
+          "isAntt": true
+        },
+        "travelCompany": {
+          "name": "Catarinense"
+        }
+      }
+    ]
+  }
+}

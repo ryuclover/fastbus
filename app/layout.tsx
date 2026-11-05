@@ -1,45 +1,13 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: 'FastTravel - Busca de passagens de ônibus',
-  description: 'Busque passagens de ônibus e promoções em vários sites de transporte.',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
+  title: 'FastBus — Sua próxima viagem, no radar',
+  description: 'Monitore passagens de ônibus e oportunidades ID Jovem. Salve sua rota e receba avisos no seu WhatsApp.',
+  icons: { icon: '/icon.svg' },
+  robots: { index: false, follow: false },
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
-  return (
-    <html lang="pt-BR">
-      <body className="font-sans antialiased">
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  )
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="pt-BR"><body className="font-sans antialiased">{children}</body></html>
 }

@@ -52,7 +52,7 @@ export async function mapGuanabara(
     const url = res.url()
     if (url.includes("api") || url.includes("trip") || url.includes("cota") || url.includes("_next/data")) {
       try {
-        const json = await res.json()
+        await res.json()
         console.log(`📦 [Guanabara API Response] ${url} retornou JSON!`)
       } catch (e) {}
     }

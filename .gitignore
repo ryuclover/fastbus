@@ -16,4 +16,12 @@ scratch/
 /*.png
 !docs/screenshots/*.png
 *.tsbuildinfo
+# FastBus private state and temporary browser profiles
+data/
+.wwebjs_auth/
+.wwebjs_cache/
+RemoteAuth-*.zip
+.audit-temp.json
+test-results/
 .env*
+.fastbus-cloud/

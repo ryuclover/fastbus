@@ -1,0 +1,15 @@
+.git
+.agents
+.codex
+node_modules
+.next
+.env*
+data
+scratch
+test-results
+.wwebjs_auth
+.wwebjs_cache
+RemoteAuth-*.zip
+docs/diagnostics
+docs/screenshots
+*.tsbuildinfo

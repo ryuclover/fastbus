@@ -1,0 +1,528 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@puppeteer/browsers": {
+      "name": "@puppeteer/browsers",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "extract-zip",
+        "proxy-agent"
+      ],
+      "effects": [
+        "puppeteer",
+        "puppeteer-core"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/@puppeteer/browsers",
+        "node_modules/whatsapp-web.js/node_modules/@puppeteer/browsers"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@vercel/blob": {
+      "name": "@vercel/blob",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "@vercel/oidc"
+      ],
+      "effects": [],
+      "range": ">=2.4.1-b7027de-20260616193056",
+      "nodes": [
+        "node_modules/@vercel/blob"
+      ],
+      "fixAvailable": {
+        "name": "@vercel/blob",
+        "version": "2.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@vercel/cli-config": {
+      "name": "@vercel/cli-config",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "zod"
+      ],
+      "effects": [
+        "@vercel/oidc"
+      ],
+      "range": "<=0.3.5",
+      "nodes": [
+        "node_modules/@vercel/cli-config"
+      ],
+      "fixAvailable": {
+        "name": "@vercel/blob",
+        "version": "2.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@vercel/oidc": {
+      "name": "@vercel/oidc",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@vercel/cli-config"
+      ],
+      "effects": [
+        "@vercel/blob",
+        "@vercel/sandbox"
+      ],
+      "range": "3.6.0 - 4.0.5",
+      "nodes": [
+        "node_modules/@vercel/blob/node_modules/@vercel/oidc",
+        "node_modules/@vercel/oidc"
+      ],
+      "fixAvailable": {
+        "name": "@vercel/blob",
+        "version": "2.4.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@vercel/sandbox": {
+      "name": "@vercel/sandbox",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "@vercel/oidc"
+      ],
+      "effects": [],
+      "range": ">=3.7.0",
+      "nodes": [
+        "node_modules/@vercel/sandbox"
+      ],
+      "fixAvailable": {
+        "name": "@vercel/sandbox",
+        "version": "3.6.1",
+        "isSemVerMajor": true
+      }
+    },
+    "archiver": {
+      "name": "archiver",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "archiver-utils",
+        "zip-stream"
+      ],
+      "effects": [
+        "whatsapp-web.js"
+      ],
+      "range": "7.0.0 - 7.0.1",
+      "nodes": [
+        "node_modules/archiver"
+      ],
+      "fixAvailable": {
+        "name": "whatsapp-web.js",
+        "version": "1.34.2",
+        "isSemVerMajor": true
+      }
+    },
+    "archiver-utils": {
+      "name": "archiver-utils",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "glob"
+      ],
+      "effects": [
+        "archiver",
+        "zip-stream"
+      ],
+      "range": ">=5.0.1",
+      "nodes": [
+        "node_modules/archiver-utils"
+      ],
+      "fixAvailable": {
+        "name": "whatsapp-web.js",
+        "version": "1.34.2",
+        "isSemVerMajor": true
+      }
+    },
+    "basic-ftp": {
+      "name": "basic-ftp",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1240853,
+          "name": "basic-ftp",
+          "dependency": "basic-ftp",
+          "title": "basic-ftp: Quadratic-time CPU denial of service in Client.list() Unix directory-listing parser (RE_LINE backtracking)",
+          "url": "https://github.com/advisories/GHSA-c475-qrg2-pj4r",
+          "severity": "high",
+          "cwe": [
+            "CWE-1333"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": "<=6.2.0"
+        }
+      ],
+      "effects": [
+        "get-uri"
+      ],
+      "range": "<=6.2.0",
+      "nodes": [
+        "node_modules/basic-ftp"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "chromium-bidi": {
+      "name": "chromium-bidi",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "zod"
+      ],
+      "effects": [
+        "puppeteer",
+        "puppeteer-core"
+      ],
+      "range": "0.5.13 - 157.0.8081-0",
+      "nodes": [
+        "node_modules/whatsapp-web.js/node_modules/chromium-bidi"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "extract-zip": {
+      "name": "extract-zip",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1139346,
+          "name": "extract-zip",
+          "dependency": "extract-zip",
+          "title": "extract-zip unvalidated symlink path traversal",
+          "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 8.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
+          },
+          "range": "<=2.0.1"
+        },
+        {
+          "source": 1193685,
+          "name": "extract-zip",
+          "dependency": "extract-zip",
+          "title": "extract-zip allows arbitrary file writes through symlink archive entries",
+          "url": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 8.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:H"
+          },
+          "range": "<=2.0.1"
+        }
+      ],
+      "effects": [
+        "@puppeteer/browsers"
+      ],
+      "range": "*",
+      "nodes": [
+        "node_modules/extract-zip"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "get-uri": {
+      "name": "get-uri",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "basic-ftp"
+      ],
+      "effects": [
+        "pac-proxy-agent"
+      ],
+      "range": ">=5.0.0",
+      "nodes": [
+        "node_modules/whatsapp-web.js/node_modules/get-uri"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "glob": {
+      "name": "glob",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1244013,
+          "name": "glob",
+          "dependency": "glob",
+          "title": "Glob: AbortSignal cancellation bypass allows post-timeout filesystem traversal",
+          "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-400"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=9.0.0 <=14.0.1"
+        },
+        "minimatch"
+      ],
+      "effects": [
+        "archiver-utils"
+      ],
+      "range": "9.0.0 - 14.0.1",
+      "nodes": [
+        "node_modules/archiver-utils/node_modules/glob"
+      ],
+      "fixAvailable": {
+        "name": "whatsapp-web.js",
+        "version": "1.34.2",
+        "isSemVerMajor": true
+      }
+    },
+    "minimatch": {
+      "name": "minimatch",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1244623,
+          "name": "minimatch",
+          "dependency": "minimatch",
+          "title": "minimatch has potential denial of service via globparts amplification",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-405"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=7.0.0 <11.0.1"
+        }
+      ],
+      "effects": [
+        "glob"
+      ],
+      "range": "7.0.0 - 11.0.0",
+      "nodes": [
+        "node_modules/archiver-utils/node_modules/minimatch"
+      ],
+      "fixAvailable": {
+        "name": "whatsapp-web.js",
+        "version": "1.34.2",
+        "isSemVerMajor": true
+      }
+    },
+    "pac-proxy-agent": {
+      "name": "pac-proxy-agent",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "get-uri"
+      ],
+      "effects": [
+        "proxy-agent"
+      ],
+      "range": ">=6.0.0",
+      "nodes": [
+        "node_modules/whatsapp-web.js/node_modules/pac-proxy-agent"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "proxy-agent": {
+      "name": "proxy-agent",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "pac-proxy-agent"
+      ],
+      "effects": [
+        "@puppeteer/browsers"
+      ],
+      "range": ">=6.0.0",
+      "nodes": [
+        "node_modules/whatsapp-web.js/node_modules/proxy-agent"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "puppeteer": {
+      "name": "puppeteer",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "@puppeteer/browsers",
+        "@puppeteer/browsers",
+        "chromium-bidi",
+        "puppeteer-core",
+        "puppeteer-core"
+      ],
+      "effects": [
+        "whatsapp-web.js"
+      ],
+      "range": ">=19.8.1",
+      "nodes": [
+        "node_modules/puppeteer",
+        "node_modules/whatsapp-web.js/node_modules/puppeteer"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "puppeteer-core": {
+      "name": "puppeteer-core",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@puppeteer/browsers",
+        "@puppeteer/browsers",
+        "chromium-bidi"
+      ],
+      "effects": [
+        "puppeteer"
+      ],
+      "range": ">=19.8.4",
+      "nodes": [
+        "node_modules/puppeteer-core",
+        "node_modules/whatsapp-web.js/node_modules/puppeteer-core"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    },
+    "whatsapp-web.js": {
+      "name": "whatsapp-web.js",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "archiver",
+        "puppeteer"
+      ],
+      "effects": [],
+      "range": "1.34.4 - 1.34.7",
+      "nodes": [
+        "node_modules/whatsapp-web.js"
+      ],
+      "fixAvailable": {
+        "name": "whatsapp-web.js",
+        "version": "1.34.2",
+        "isSemVerMajor": true
+      }
+    },
+    "zip-stream": {
+      "name": "zip-stream",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "archiver-utils"
+      ],
+      "effects": [
+        "archiver"
+      ],
+      "range": "6.0.0 - 6.0.1",
+      "nodes": [
+        "node_modules/zip-stream"
+      ],
+      "fixAvailable": {
+        "name": "whatsapp-web.js",
+        "version": "1.34.2",
+        "isSemVerMajor": true
+      }
+    },
+    "zod": {
+      "name": "zod",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1243066,
+          "name": "zod",
+          "dependency": "zod",
+          "title": "Zod can exhaust memory while validating oversized constrained collections",
+          "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+          "severity": "high",
+          "cwe": [
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": "<4.6.6"
+        }
+      ],
+      "effects": [
+        "@vercel/cli-config",
+        "chromium-bidi"
+      ],
+      "range": "<4.6.6",
+      "nodes": [
+        "node_modules/@vercel/cli-config/node_modules/zod",
+        "node_modules/whatsapp-web.js/node_modules/zod"
+      ],
+      "fixAvailable": {
+        "name": "puppeteer",
+        "version": "19.8.0",
+        "isSemVerMajor": true
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 5,
+      "high": 15,
+      "critical": 0,
+      "total": 20
+    },
+    "dependencies": {
+      "prod": 390,
+      "dev": 49,
+      "optional": 168,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 577
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { comparableCents } from "../money"
 import {
   ResultItem,
   ScraperResult,
@@ -142,12 +143,12 @@ export async function compararPrecosIntervalo(
           (typeof res.error === "string" && (res.error.includes("TIMEOUT") || res.error.includes("aborted")))
         const status = res.error === "COVERAGE_NOT_IMPLEMENTED"
           ? "sem_cobertura"
-          : res.error === "BFF_NO_RESPONSE"
+          : res.outcome === "manual" || res.outcome === "partial" || res.error === "BFF_NO_RESPONSE"
             ? "inconclusivo"
           : res.resultados.length > 0
             ? "online"
           : isTimeout
-            ? "sem_oferta"
+            ? "erro"
           : res.error
             ? "erro"
           : "sem_oferta"
@@ -171,9 +172,7 @@ export async function compararPrecosIntervalo(
       if (idJovem && apenas100) {
         viagensDoDia = viagensDoDia.filter(
           (v) =>
-            v.tipoGratuidade === "id_jovem_100" ||
-            v.valorNumerico === 0 ||
-            v.valor === "R$ 0,00"
+            v.tipoGratuidade === "id_jovem_100" && !!v.evidence?.benefitEvidence
         )
       }
 
@@ -181,14 +180,14 @@ export async function compararPrecosIntervalo(
     }
   )
 
-  let menorPrecoPeriodo: number | undefined = undefined
+  let menorPrecoPeriodoMinor: number | undefined = undefined
   let melhorDataPeriodo: string | undefined = undefined
   let empresaCampeaoPeriodo: string | undefined = undefined
 
   for (const { dataIso, viagensDoDia } of resultadosPorData) {
     todasViagens.push(...viagensDoDia)
 
-    let menorValorDia: number | undefined = undefined
+    let menorValorDiaMinor: number | undefined = undefined
     let empresaMenorValor: string | undefined = undefined
     let horarioMenorValor: string | undefined = undefined
     let temIdJovem100 = false
@@ -196,9 +195,7 @@ export async function compararPrecosIntervalo(
 
     for (const v of viagensDoDia) {
       const is100 =
-        v.tipoGratuidade === "id_jovem_100" ||
-        v.valorNumerico === 0 ||
-        v.valor === "R$ 0,00"
+        v.tipoGratuidade === "id_jovem_100" && !!v.evidence?.benefitEvidence
 
       if (is100) {
         temIdJovem100 = true
@@ -207,9 +204,10 @@ export async function compararPrecosIntervalo(
         temIdJovem50 = true
       }
 
-      if (v.valorNumerico !== undefined) {
-        if (menorValorDia === undefined || v.valorNumerico < menorValorDia) {
-          menorValorDia = v.valorNumerico
+      const cents=comparableCents(v)
+      if (cents !== null) {
+        if (menorValorDiaMinor === undefined || cents < menorValorDiaMinor) {
+          menorValorDiaMinor = cents
           empresaMenorValor = v.empresa
           horarioMenorValor = v.horario
         }
@@ -218,7 +216,7 @@ export async function compararPrecosIntervalo(
 
     resumoPorDia.push({
       data: dataIso,
-      menorValor: menorValorDia,
+      menorValor: menorValorDiaMinor === undefined ? undefined : menorValorDiaMinor / 100,
       temIdJovem100,
       temIdJovem50,
       totalViagens: viagensDoDia.length,
@@ -227,16 +225,12 @@ export async function compararPrecosIntervalo(
     })
 
     // Avalia o campeão geral do período
-    if (menorValorDia !== undefined) {
-      if (menorPrecoPeriodo === undefined || menorValorDia < menorPrecoPeriodo) {
-        menorPrecoPeriodo = menorValorDia
+    if (menorValorDiaMinor !== undefined) {
+      if (menorPrecoPeriodoMinor === undefined || menorValorDiaMinor < menorPrecoPeriodoMinor) {
+        menorPrecoPeriodoMinor = menorValorDiaMinor
         melhorDataPeriodo = dataIso
         empresaCampeaoPeriodo = empresaMenorValor
       }
-    } else if (temIdJovem100 && menorPrecoPeriodo === undefined) {
-      menorPrecoPeriodo = 0
-      melhorDataPeriodo = dataIso
-      empresaCampeaoPeriodo = empresaMenorValor
     }
   }
 
@@ -245,8 +239,8 @@ export async function compararPrecosIntervalo(
     if (a.data !== b.data && a.data && b.data) {
       return a.data.localeCompare(b.data)
     }
-    const valA = a.valorNumerico ?? 999999
-    const valB = b.valorNumerico ?? 999999
+    const valA = comparableCents(a) ?? Infinity
+    const valB = comparableCents(b) ?? Infinity
     return valA - valB
   })
 
@@ -257,7 +251,7 @@ export async function compararPrecosIntervalo(
     dataFim,
     idJovemApenas: idJovem,
     melhorDataPeriodo,
-    menorPrecoPeriodo,
+    menorPrecoPeriodo: menorPrecoPeriodoMinor === undefined ? undefined : menorPrecoPeriodoMinor/100,
     empresaCampeaoPeriodo,
     resumoPorDia,
     todasViagens,

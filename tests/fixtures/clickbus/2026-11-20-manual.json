@@ -1,0 +1,71 @@
+{
+  "observedAt": "2026-10-19T00:36:42.006Z",
+  "route": {
+    "origin": "Rio de Janeiro::RJ",
+    "destination": "Sao Paulo::SP"
+  },
+  "date": "2026-11-20",
+  "sourceUrl": "https://www.clickbus.com.br/viagem?tripId=bd85ce7a-600c-38d0-80ec-6900a62d5c42&clientId=2&isLowFare=false&isInTransit=false&discount=true&type=direct&isMultiTrip=false&hasReturn=false&isReturn=false&flow=mfe&hideAddToOrder=false",
+  "tripId": "bd85ce7a-600c-38d0-80ec-6900a62d5c42",
+  "expectedUi": null,
+  "pageTrip": {
+    "uuid": "bd85ce7a-600c-38d0-80ec-6900a62d5c42",
+    "travelCompany": {
+      "hasGratuity": false
+    },
+    "discounts": {
+      "youngIdPartialPrice": {
+        "price": 68.17,
+        "percentage": 50,
+        "type": "YOUNG_ID",
+        "young": true,
+        "availableSeats": 2,
+        "amount": 2,
+        "occupiedSeats": 0
+      },
+      "youngIdFullPrice": {
+        "price": 0,
+        "percentage": 100,
+        "type": "YOUNG_ID",
+        "young": true,
+        "availableSeats": 1,
+        "amount": 1,
+        "occupiedSeats": 1
+      }
+    }
+  },
+  "searchTrip": {
+    "price": 149.98,
+    "options": {
+      "isDiscountAvailable": true,
+      "hasGratuityCheckout": false,
+      "isGratuityTrip": true,
+      "hasWomanSpace": false
+    },
+    "parts": [
+      {
+        "tripId": "bd85ce7a-600c-38d0-80ec-6900a62d5c42",
+        "departure": {
+          "date": "2026-11-20",
+          "time": "17:00:00",
+          "city": "Rio de Janeiro",
+          "state": "RJ"
+        },
+        "arrival": {
+          "date": "2026-11-20",
+          "time": "23:00:00",
+          "city": "São Paulo",
+          "state": "SP"
+        },
+        "serviceClass": {
+          "id": 1,
+          "name": "Convencional",
+          "isAntt": true
+        },
+        "travelCompany": {
+          "name": "EXPRESSO NS PENHA"
+        }
+      }
+    ]
+  }
+}

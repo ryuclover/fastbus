@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": [
+    "scripts/worker.ts",
+    "scripts/cloud-worker.ts",
+    "scripts/prepare-cloud.ts",
+    "scripts/admin.ts",
+    "scripts/verify-e2e.ts",
+    "lib/**/*.ts",
+    "tests/**/*.test.ts"
+  ],
+  "exclude": ["node_modules", "scratch"]
+}

@@ -1,0 +1,101 @@
+{
+  "testedAt": "2026-10-19T00:43:52.341Z",
+  "date": "2026-11-18",
+  "transport": "Real website browser flow + Browsec United States",
+  "result": {
+    "disponivel": true,
+    "vagasIdJovem": 10,
+    "detalhes": "5 oferta(s) confirmada(s).",
+    "siteUrl": "https://www.clickbus.com.br/onibus/rio-de-janeiro-rj-todos/sao-paulo-sp-todos?departureDate=2026-11-18&gratuity=true",
+    "provedor": "ClickBus",
+    "empresa": "ClickBus",
+    "dataConsultada": "2026-11-18",
+    "resultados": [
+      {
+        "empresa": "Expresso Do Sul",
+        "horario": "08:30",
+        "chegada": "15:00",
+        "duracao": "6h 30m",
+        "valor": "R$ 0,00",
+        "valorNumerico": 0,
+        "classe": "Convencional (100% ID Jovem)",
+        "tipoGratuidade": "id_jovem_100",
+        "vagasIdJovem": 2,
+        "poltronasLivres": 37,
+        "origem": "Rio de Janeiro - RJ",
+        "destino": "Sao Paulo - SP",
+        "data": "2026-11-18",
+        "linkCompra": "https://www.clickbus.com.br/viagem?tripId=0de5d693-9875-3829-9f75-b914a3400cc7&clientId=2&discount=true&type=direct&isLowFare=false&isInTransit=false&flow=mfe"
+      },
+      {
+        "empresa": "Expresso Do Sul",
+        "horario": "08:30",
+        "chegada": "15:00",
+        "duracao": "6h 30m",
+        "valor": "R$ 33,40",
+        "valorNumerico": 33.4,
+        "classe": "Convencional (50% ID Jovem)",
+        "tipoGratuidade": "id_jovem_50",
+        "vagasIdJovem": 2,
+        "poltronasLivres": 37,
+        "origem": "Rio de Janeiro - RJ",
+        "destino": "Sao Paulo - SP",
+        "data": "2026-11-18",
+        "linkCompra": "https://www.clickbus.com.br/viagem?tripId=0de5d693-9875-3829-9f75-b914a3400cc7&clientId=2&discount=true&type=direct&isLowFare=false&isInTransit=false&flow=mfe"
+      },
+      {
+        "empresa": "1001",
+        "horario": "10:00",
+        "chegada": "17:30",
+        "duracao": "7h 30m",
+        "valor": "R$ 55,95",
+        "valorNumerico": 55.95,
+        "classe": "Convencional (50% ID Jovem)",
+        "tipoGratuidade": "id_jovem_50",
+        "vagasIdJovem": 2,
+        "poltronasLivres": 43,
+        "origem": "Rio de Janeiro - RJ",
+        "destino": "Sao Paulo - SP",
+        "data": "2026-11-18",
+        "linkCompra": "https://www.clickbus.com.br/viagem?tripId=32eb6b66-5b94-37de-a9f7-1d7944871d38&clientId=2&discount=true&type=direct&isLowFare=false&isInTransit=false&flow=mfe"
+      },
+      {
+        "empresa": "Catarinense",
+        "horario": "13:00",
+        "chegada": "19:30",
+        "duracao": "6h 30m",
+        "valor": "R$ 46,73",
+        "valorNumerico": 46.73,
+        "classe": "Convencional (50% ID Jovem)",
+        "tipoGratuidade": "id_jovem_50",
+        "vagasIdJovem": 2,
+        "poltronasLivres": 43,
+        "origem": "Rio de Janeiro - RJ",
+        "destino": "Sao Paulo - SP",
+        "data": "2026-11-18",
+        "linkCompra": "https://www.clickbus.com.br/viagem?tripId=6e1598b3-929b-37ea-bd83-49f0f9bb0652&clientId=2&discount=true&type=direct&isLowFare=false&isInTransit=false&flow=mfe"
+      },
+      {
+        "empresa": "Catarinense",
+        "horario": "23:45",
+        "chegada": "06:25",
+        "duracao": "6h 40m",
+        "valor": "R$ 55,90",
+        "valorNumerico": 55.9,
+        "classe": "Convencional (50% ID Jovem)",
+        "tipoGratuidade": "id_jovem_50",
+        "vagasIdJovem": 2,
+        "poltronasLivres": 42,
+        "origem": "Rio de Janeiro - RJ",
+        "destino": "Sao Paulo - SP",
+        "data": "2026-11-18",
+        "linkCompra": "https://www.clickbus.com.br/viagem?tripId=bd3d96a7-d587-34d9-8fb5-ae9a8d9f77d0&clientId=2&discount=true&type=direct&isLowFare=false&isInTransit=false&flow=mfe"
+      }
+    ]
+  },
+  "budget": {
+    "count": 7,
+    "limited": false,
+    "blockedUntil": 0
+  }
+}

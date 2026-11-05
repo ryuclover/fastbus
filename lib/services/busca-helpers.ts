@@ -1,27 +1,10 @@
 import { NextRequest } from "next/server"
 import { cidadesSugeridas } from "@/lib/cidades-sugeridas"
 import { ResultItem } from "@/lib/scrapers/types"
+import type { Passagem as BasePassagem } from "@/types/busca"
 
-export interface Passagem {
-  id: string
-  empresa: string
-  site: string
-  siteUrl: string
-  origem: string
-  destino: string
-  data: string
-  partida: string
-  chegada: string
-  duracao: string
-  valor?: string
-  valorNumerico?: number
-  classe?: string
-  tipoGratuidade?: "id_jovem_100" | "id_jovem_50" | "nenhuma"
-  modalidadeGratuidade?: "online" | "guiche"
-  vagasIdJovem: number
+export interface Passagem extends BasePassagem {
   vagasIdJovem100: number
-  linkCompra: string
-  avisoAssento?: string
 }
 
 interface RegistroRateLimit {
@@ -125,7 +108,7 @@ export function validarDataBusca(data: string): boolean {
   return dataUtc >= minPermitido && dataUtc <= maxUtc
 }
 
-export function converterItemParaPassagem(item: ResultItem, siteFallback = "FastTravel"): Passagem {
+export function converterItemParaPassagem(item: ResultItem, siteFallback = "FastBus"): Passagem {
   const site = item.empresa || siteFallback
   return {
     id: `${site}-${item.data}-${Math.random().toString(36).slice(2, 11)}`,

@@ -1,0 +1,33 @@
+{
+  "testedAt": "2026-10-18T11:10:28.938Z",
+  "transport": "Node.js native (no Browsec)",
+  "route": {
+    "origin": "Rio de Janeiro::RJ",
+    "destination": "Sao Paulo::SP",
+    "date": "2026-11-18"
+  },
+  "requests": [
+    {
+      "hostname": "bff.clickbus.com",
+      "path": "/web/api/v6/trips",
+      "startedAt": 1792321828421,
+      "status": 403,
+      "bytes": 146
+    }
+  ],
+  "budget": {
+    "count": 1,
+    "blockedUntil": 1792322728937,
+    "limited": false
+  },
+  "result": {
+    "disponivel": false,
+    "vagasIdJovem": 0,
+    "detalhes": "Consulte o portal oficial da ClickBus para disponibilidade nesta rota.",
+    "siteUrl": "https://www.clickbus.com.br/onibus/rio-de-janeiro-rj-todos/sao-paulo-sp-todos?departureDate=2026-11-18&gratuity=true",
+    "empresa": "ClickBus",
+    "provedor": "ClickBus",
+    "dataConsultada": "2026-11-18",
+    "resultados": []
+  }
+}

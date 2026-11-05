@@ -1,5 +1,6 @@
-import { ScraperResult } from "../types"
-import { getClickBusSession, ClickBusSession } from "./client"
+import { routeSlugParts } from "../location";
+import { ScraperResult } from "../types";
+import { getClickBusSession, ClickBusSession } from "./client";
 
 export async function scrapeClickBus(
   origemOuUrl: string,
@@ -7,32 +8,42 @@ export async function scrapeClickBus(
   data = "",
   origemUF = "RJ",
   destinoUF = "SP",
-  idJovem = false
+  idJovem = false,
 ): Promise<ScraperResult> {
-  const session = await getClickBusSession()
+  const session =
+    process.env.CLICKBUS_TRANSPORT === "browser"
+      ? (await import("./browser")).getClickBusBrowserSession()
+      : await getClickBusSession();
 
   if (origemOuUrl.startsWith("http")) {
-    try {
-      const urlObj = new URL(origemOuUrl)
-      const pathname = urlObj.pathname
-      const parts = pathname.split("/").filter(Boolean)
-      const fromSlug = parts[1] || ""
-      const toSlug = parts[2] || ""
-      const dataParam = urlObj.searchParams.get("departureDate") || ""
-      const idJovemParam = urlObj.searchParams.get("gratuity") === "true"
-
-      const cleanFrom = fromSlug.replace(/-[a-z]{2}-todos$/, "").replace(/-/g, " ")
-      const cleanTo = toSlug.replace(/-[a-z]{2}-todos$/, "").replace(/-/g, " ")
-      const ufFrom = fromSlug.match(/-([a-z]{2})-todos$/)?.[1]?.toUpperCase() || "RJ"
-      const ufTo = toSlug.match(/-([a-z]{2})-todos$/)?.[1]?.toUpperCase() || "SP"
-
-      return session.buscarData(cleanFrom, ufFrom, cleanTo, ufTo, dataParam, idJovemParam)
-    } catch (e) {
-      console.warn("[ClickBus] Erro ao parsear URL pronta:", e)
-    }
+    const url = new URL(origemOuUrl);
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (
+      !["clickbus.com.br", "www.clickbus.com.br"].includes(url.hostname) ||
+      parts.length !== 3 ||
+      parts[0] !== "onibus"
+    )
+      throw new Error("LOCATION_NOT_FOUND");
+    const from = routeSlugParts(parts[1]),
+      to = routeSlugParts(parts[2]);
+    return session.buscarData(
+      from.city,
+      from.uf,
+      to.city,
+      to.uf,
+      url.searchParams.get("departureDate") ?? "",
+      url.searchParams.get("gratuity") === "true",
+    );
   }
 
-  return session.buscarData(origemOuUrl, origemUF, destino, destinoUF, data, idJovem)
+  return session.buscarData(
+    origemOuUrl,
+    origemUF,
+    destino,
+    destinoUF,
+    data,
+    idJovem,
+  );
 }
 
-export { ClickBusSession, getClickBusSession }
+export { ClickBusSession, getClickBusSession };

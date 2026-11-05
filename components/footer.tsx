@@ -49,7 +49,7 @@ export function Footer() {
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-teal-400 flex items-center justify-center shadow-md shadow-primary/20">
                 <Bus className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-extrabold text-xl tracking-tight">FastTravel</span>
+              <span className="font-extrabold text-xl tracking-tight">FastBus</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               O agregador inteligente que compara preços, horários e vagas de <strong className="text-foreground font-semibold">ID Jovem (100% e 50%)</strong> em múltiplos provedores ao mesmo tempo ao longo de todo o período da sua viagem.
@@ -99,10 +99,10 @@ export function Footer() {
         {/* Rodapé inferior com aviso legal */}
         <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>
-            FastTravel é uma ferramenta independente de consulta pública. As reservas e compras são concluídas diretamente nos canais oficiais das viações.
+            FastBus é uma ferramenta independente de consulta pública. As reservas e compras são concluídas diretamente nos canais oficiais das viações.
           </p>
           <p className="shrink-0">
-            © {new Date().getFullYear()} FastTravel. Todos os direitos reservados.
+            © {new Date().getFullYear()} FastBus. Todos os direitos reservados.
           </p>
         </div>
       </div>
