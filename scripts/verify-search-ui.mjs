@@ -137,6 +137,9 @@ try {
     .getByText("Ver situação das fontes e datas", { exact: true })
     .click();
   await page.getByText(/Em pausa até/).waitFor();
+  await page.locator(".fs-results").screenshot({
+    path: "docs/screenshots/fastbus-resultados.png",
+  });
   await page.screenshot({
     path: "docs/screenshots/fastbus-search.png",
     fullPage: true,

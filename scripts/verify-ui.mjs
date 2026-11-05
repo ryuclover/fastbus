@@ -283,6 +283,9 @@ try {
   assert.equal(monitors[0].maxPrice, 120);
   await page.getByRole("button", { name: "Alertas", exact: true }).click();
   await page.getByRole("link", { name: "Conferir na fonte" }).waitFor();
+  await page.locator(".fb-alert").first().screenshot({
+    path: "docs/screenshots/fastbus-alerta.png",
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await page
     .getByRole("button", { name: "Monitoramentos", exact: true })

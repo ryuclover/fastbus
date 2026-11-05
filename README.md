@@ -11,15 +11,31 @@ O FastBus busca passagens de ônibus por rota, data e preço. Você pode compara
 3. Salve os critérios como monitoramento. No painel, confirme o seu número com o código recebido pelo WhatsApp. O remetente é central e o pareamento é administrado separadamente.
 4. Confira a cobertura e a última consulta no painel. Na configuração Vercel do repositório, o cron roda **uma vez ao dia, às 12h UTC**. Uma rodada consulta uma combinação de fonte e data. Uma janela de 14 dias pode ter cobertura parcial.
 
-### Busca manual
+### Resultados da busca
 
-![Busca manual do FastBus com critérios de viagem, cobertura por fonte e resultados de demonstração](docs/screenshots/fastbus-search.png)
+![Resultados da busca com a situação de cada fonte, filtros e opções de viagem](docs/screenshots/fastbus-resultados.png)
 
-### Painel de monitoramento
+### Histórico de alertas
 
-![Painel do FastBus com rota salva e configuração do contato de demonstração](docs/screenshots/fastbus-dashboard.png)
+![Alerta de passagem com preço, horário e link para conferir a oferta na fonte](docs/screenshots/fastbus-alerta.png)
 
-As capturas usam dados fictícios. Veja também a [busca no celular](docs/screenshots/fastbus-search-mobile.png) e o [diagnóstico administrativo](docs/screenshots/fastbus-admin.png).
+### Telas do FastBus
+
+As capturas usam dados fictícios. Clique em uma imagem para ampliá-la.
+
+| Busca manual | Revisão dos critérios do alerta |
+| --- | --- |
+| [![Formulário de busca e passagens encontradas](docs/screenshots/fastbus-search.png)](docs/screenshots/fastbus-search.png) | [![Formulário para salvar uma busca como monitoramento](docs/screenshots/fastbus-search-alert-draft.png)](docs/screenshots/fastbus-search-alert-draft.png) |
+| **Painel de monitoramento** | **Diagnóstico administrativo** |
+| [![Rotas salvas e configuração do destinatário](docs/screenshots/fastbus-dashboard.png)](docs/screenshots/fastbus-dashboard.png) | [![Verificações do remetente, envio e provedores](docs/screenshots/fastbus-admin.png)](docs/screenshots/fastbus-admin.png) |
+
+<details>
+<summary>Ver a busca e o painel no celular</summary>
+
+<a href="docs/screenshots/fastbus-search-mobile.png"><img src="docs/screenshots/fastbus-search-mobile.png" width="275" alt="Busca de passagens no celular"></a>
+<a href="docs/screenshots/fastbus-mobile.png"><img src="docs/screenshots/fastbus-mobile.png" width="275" alt="Monitoramentos no celular"></a>
+
+</details>
 
 ## Como executar
 
